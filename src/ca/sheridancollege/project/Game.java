@@ -13,10 +13,7 @@ import java.util.ArrayList;
  * Base code. Students can modify and extend to implement their game. Add your
  * name as a modifier and the date!
  *
- * @author Sang Heon, Park (991517263)
- * @author Gagandeep, Ghotra (9915284)
  * @author Zain Razvi (991517290)
- * @author Lee Fyffe (991540454)
  */
 public abstract class Game {
 

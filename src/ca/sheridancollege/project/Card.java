@@ -10,10 +10,7 @@ package ca.sheridancollege.project;
  * enough to be instantiated for any Card game. Students wishing to add to the
  * code should remember to add themselves as a modifier.
  *
- * @author Sang Heon, Park (991517263)
- * @author Gagandeep, Ghotra (9915284)
  * @author Zain Razvi (991517290)
- * @author Lee Fyffe (991540454)
  */
 public abstract class Card {
     //default modifier for child classes
