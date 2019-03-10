@@ -12,7 +12,7 @@ package ca.sheridancollege.project;
  * @author Zain Razvi (991517290)
  */
 public abstract class Player {
-//zain
+
     private String name; //the unique ID for this player
 
     /**

@@ -4,7 +4,7 @@
  * Add your name as a modifier and the date!
  */
 package ca.sheridancollege.project;
-//zain
+
 /**
  * A class to be used as the base Card class for the project. Must be general
  * enough to be instantiated for any Card game. Students wishing to add to the
