@@ -7,20 +7,24 @@ package ca.sheridancollege.project;
 
 /**
  * A class to be used as the base Card class for the project. Must be general
- * enough to be instantiated for any Card game. Students wishing to add to the code 
- * should remember to add themselves as a modifier.
- * @author dancye, 2018
+ * enough to be instantiated for any Card game. Students wishing to add to the
+ * code should remember to add themselves as a modifier.
+ *
+ * @author Sang Heon, Park (991517263)
+ * @author Gagandeep, Ghotra (9915284)
+ * @author Zain Razvi (991517290)
+ * @author Lee Fyffe (991540454)
  */
-public abstract class Card 
-{
+public abstract class Card {
     //default modifier for child classes
-    
+
     /**
-     * Students should implement this method for their specific children classes 
-     * @return a String representation of a card. Could be an UNO card, a regular playing card etc.
+     * Students should implement this method for their specific children classes
+     *
+     * @return a String representation of a card. Could be an UNO card, a
+     * regular playing card etc.
      */
-    
     @Override
     public abstract String toString();
-    
+
 }
