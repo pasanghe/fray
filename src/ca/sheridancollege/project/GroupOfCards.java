@@ -16,7 +16,7 @@ import java.util.Collections;
  * @author Zain Razvi (991517290)
  */
 public class GroupOfCards {
-
+//zain
     //The group of cards, stored in an ArrayList
     private ArrayList<Card> cards;
     private int size;//the size of the grouping
