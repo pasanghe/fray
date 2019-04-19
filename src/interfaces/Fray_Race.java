@@ -5,7 +5,7 @@ package interfaces;
 
 import java.util.ArrayList;
 
-import ObjectClasses.FrayCard;
+import objectClasses.FrayCard;
 
 /**
  * @author gagan
