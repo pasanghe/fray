@@ -42,7 +42,9 @@ public class FrayCardGame{
 	private JButton[] yourFieldCards = new JButton[6];
 	private JButton[] enemyFieldCards = new JButton[6];
 	private JButton btnEndTurn = new JButton("END TURN");
-	private JLabel lblturnstatus = new JLabel("*TurnStatus*"), lblglobaltimer = new JLabel("*GlobalTimer*");
+	private JLabel lblturnstatus = new JLabel("*TurnStatus*");
+	private JButton lblenemyraceimage = new JButton();
+	private JLabel lblmanaValue = new JLabel();
 	private Player passPlayer;
 	private Timer timerObjUpdatingGame;	
 	private String Username;
@@ -56,32 +58,36 @@ public class FrayCardGame{
 	private int cardsInHandx = 304, cardsInHandy = 623, cardsInHandwidth = 119, cardsInHandheight = 148;
 	private int yourFieldCardsHandx = 162, yourFieldCardsHandy = 464, yourFieldCardswidth = 119, yourFieldCardsheight = 148;
 	private int enemyFieldCardsHandx = 160, enemyFieldCardsHandy = 159, enemyFieldCardswidth = 119, enemyFieldCardsheight = 148;
+	private int manaValue, yourHealth;
+	private JLabel lblyourhealth = new JLabel();
+	private InGameCardViewer cardViewer;
 	/**
 	 * Create the frame.
 	 */
 	@SuppressWarnings("unchecked")
-	public FrayCardGame(Player passPlayer) {
+	public FrayCardGame(Player passPlayer) throws java.sql.SQLSyntaxErrorException {
 		setPassPlayer(passPlayer);
 		setUsername(passPlayer.getPlayerID());
+		setManaValue(1);//passPlayer.getManaValue()
 		
 		JLabel lblenemyhealth = new JLabel();
 		JLabel cardDeckFractionLabel = new JLabel();
 		
+		cardViewer = new InGameCardViewer(getUsername());
+		cardViewer.setVisible(true);
+		
 		passList = (ArrayList<FrayCard>) passPlayer.getFrayCardDeck().clone();
 		fullpassList = (ArrayList<FrayCard>) passList.clone();
+		Collections.shuffle(passList);
 		
 		for(int i = 0; i < arrayOfCardsOnHand.length; i++) {
 			if(i == 0) {
 				arrayOfCardsOnHand[i] = passList.get(i).getCardName();
-				System.out.println("reeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee " + passList.get(i));
-				System.out.println("Going to remove:" + passList.get(i).getCardName());
 				passList.remove(i);
 			}
 		
 			if(i > 0) {
 				arrayOfCardsOnHand[i] = passList.get(i-1).getCardName();
-				System.out.println("reeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee " + passList.get(i-1));
-				System.out.println("Going to remove:" + passList.get(i-1).getCardName());
 				passList.remove(i-1);
 			}
 		}
@@ -95,17 +101,22 @@ public class FrayCardGame{
 				inGameStatusCheckPlayer2();
 				setOpponentData();
 				setOpponentData2();
+				setYourData();
+				setYourData2();
 				playerSetFirstTurnStatus();
 				getCurrentPlayerTurnStatus();
 				getCurrentPlayerTurnStatusPlayer2();
-				resetTurnCountDownTimer();
 				lblenemyhealth.setText(String.valueOf(getOpponentHealth()));
 				cardDeckFractionLabel.setText(passList.size() + "/" + passPlayer.getFrayCardDeck().size());
+				lblyourhealth.setText(getYourHealth() + "Health");
+				removeCardIfDead();
+				removeCardIfDead2();
+				updateEnemyFieldPlayer1();
+				updateEnemyFieldPlayer2();
 			}
 			
 		}, 0, 1000);
 		setGameFrame(new JFrame());
-	
 		getGameFrame().setBounds(100, 100, 1200, 800);
 		getGameFrame().setResizable(false);
 		contentPane = new JPanel();
@@ -129,6 +140,7 @@ public class FrayCardGame{
 					myStat = con.createStatement();
 					String sql = "UPDATE sql3282320.UserDataTable SET OnlineStatus = 'Offline' WHERE Username = '" + getUsername() + "'";
 					myStat.executeUpdate(sql);
+					cardViewer.dispose();
 					getGameFrame().setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 					timerObjUpdatingGame.cancel();
 					timerObjUpdatingGame.purge();
@@ -147,22 +159,37 @@ public class FrayCardGame{
 		panel.setBounds(0, 0, 1194, 148);
 		contentPane.add(panel);
 		
-		JLabel lblenemyusername = new JLabel();
-		lblenemyusername.setText(getOpponentUsername());
-		panel.add(lblenemyusername);
+		JButton btnClearButtonSelection = new JButton("Clear Button Selection");
+		btnClearButtonSelection.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				passIndex = 8;
+			}
+		});
+		
+		btnClearButtonSelection.setBounds(1022, 629, 162, 23);
+		contentPane.add(btnClearButtonSelection);
 		panel.add(lblenemyhealth);
 		if(passPlayer.getPlayerRaceName().equalsIgnoreCase("Elf")) {
-			JLabel lblenemyraceimage = new JLabel(new ImageIcon(FrayCardGame.class.getResource("../images/ElfGeneral2.jpg")));
-			panel.add(lblenemyraceimage);
+			lblenemyraceimage.setIcon(new ImageIcon(FrayCardGame.class.getResource("../images/ElfGeneral2.jpg")));
 		}	 
 		else if (passPlayer.getPlayerRaceName().equalsIgnoreCase("Human")) {
-			JLabel lblenemyraceimage = new JLabel(new ImageIcon(FrayCardGame.class.getResource("../images/HumanGeneral2.png")));
-			panel.add(lblenemyraceimage);
+			lblenemyraceimage.setIcon(new ImageIcon(FrayCardGame.class.getResource("../images/HumanGeneral2.png")));
 		}
+		panel.add(lblenemyraceimage);
+		lblenemyraceimage.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				//Call CardsAffect Class here
+			}
+		});
 		
 		cardDeckFractionLabel.setFont(new Font("Tahoma", Font.PLAIN, 20));
-		cardDeckFractionLabel.setBounds(160, 651, 122, 94);
+		cardDeckFractionLabel.setBounds(142, 629, 122, 94);
 		contentPane.add(cardDeckFractionLabel);
+		
+		lblmanaValue.setFont(new Font("Tahoma", Font.PLAIN, 20));
+		lblmanaValue.setBounds(275, 629, 122, 94);
+		lblmanaValue.setText(getManaValue() + "/" + 10);
+		contentPane.add(lblmanaValue);
 		
 		for(int j = 0; j < btnCardsInHand.length; j++) {//Your Hand Cards
 			btnCardsInHand[j] = new JButton();
@@ -210,7 +237,6 @@ public class FrayCardGame{
 		lblturnstatus.setBounds(1022, 723, 144, 39);
 		contentPane.add(lblturnstatus);
 		
-		JLabel lblyourhealth = new JLabel("*YourHealth*");//////////////////////////////////
 		lblyourhealth.setBounds(142, 738, 164, 14);
 		contentPane.add(lblyourhealth);
 		
@@ -232,61 +258,106 @@ public class FrayCardGame{
 		grassTexture.setBounds(0, 0, 1194, 771);
 		contentPane.add(grassTexture);
 		
+		enemyFieldCards[0].addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if(passIndex == 8) {setText(enemyFieldCards[0].getText());setText2(enemyFieldCards[0].getText());}
+			}
+			
+		});
+		
+		enemyFieldCards[1].addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if(passIndex == 8) {setText(enemyFieldCards[1].getText());setText2(enemyFieldCards[1].getText());}
+			}
+			
+		});
+		enemyFieldCards[2].addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if(passIndex == 8) {setText(enemyFieldCards[2].getText());setText2(enemyFieldCards[2].getText());}
+			}
+			
+		});
+		enemyFieldCards[3].addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if(passIndex == 8) {setText(enemyFieldCards[3].getText());setText2(enemyFieldCards[3].getText());}
+			}
+			
+		});
+		enemyFieldCards[4].addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if(passIndex == 8) {setText(enemyFieldCards[4].getText());setText2(enemyFieldCards[4].getText());}
+			}
+			
+		});
+		
 		btnCardsInHand[0].addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) { 
 				setPassIndex(0);
+				setTextInHandCards(btnCardsInHand[0].getText());
 			}
 		});
 	
 		btnCardsInHand[1].addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) { 
 				setPassIndex(1);
+				setTextInHandCards(btnCardsInHand[1].getText());
 			}
 		});
 		
 		btnCardsInHand[2].addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) { 
 				setPassIndex(2);
+				setTextInHandCards(btnCardsInHand[2].getText());
 			}
 		});
 		
 		btnCardsInHand[3].addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) { 
 				setPassIndex(3);
+				setTextInHandCards(btnCardsInHand[3].getText());
 			}
 		});
 		
 		btnCardsInHand[4].addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) { 
 				setPassIndex(4);
+				setTextInHandCards(btnCardsInHand[4].getText());
 			}
 		});
 		
 		yourFieldCards[0].addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if(passIndex == 99) {JOptionPane.showMessageDialog(null, "Please chose a card to put onto the field first!");}
+				else if (passIndex == 8) {
+					setText(yourFieldCards[0].getText());
+					setText2(yourFieldCards[0].getText());
+				}
 				else {
-					Collections.sort(fullpassList, new Comparator<FrayCard>() {
-						public int compare(FrayCard c1, FrayCard c2) {
-							return c1.getCardName().compareToIgnoreCase(c2.getCardName());
-						}
-					});
+			
+					int index1 = searchForCard(arrayOfCardsOnHand[getPassIndex()]);
+
+					int cardEnergyCost = fullpassList.get(index1).getEnergyCost();
+					int calculation = getManaValue() - cardEnergyCost;
+					if(calculation >= 0 ) {
+						setManaValue(calculation);
+						lblmanaValue.setText(getManaValue() + "/" + 10);
+						yourFieldCards[0].setText(arrayOfCardsOnHand[getPassIndex()]);
+						putCardOnToField(getPassIndex(), 1); // CardPosition in arrayList, card field button position
+						putCardOnToFieldPlayer2(getPassIndex(), 1);
 					
-					FrayCard searchKey = new FrayCard(null, arrayOfCardsOnHand[getPassIndex()], 0,  0, 0, "", "", 0, "", 0, 0, 0, 0);
+						arrayOfCardsOnHand[getPassIndex()] = "Null";
+						passIndex = 8;
+					}
 					
-					int index1 = Collections.binarySearch(fullpassList, searchKey, new Comparator<FrayCard>() {
-						public int compare(FrayCard c1, FrayCard c2) {
-							return c1.getCardName().compareToIgnoreCase(c2.getCardName());
-						}
-					});
+					else {
+						JOptionPane.showMessageDialog(null, "You will have no mana!");
+					}
 					
-					JOptionPane.showMessageDialog(null, "Found in PassList: " + fullpassList.get(index1).getCardName());
-					System.out.println(getPassIndex());
-					yourFieldCards[0].setText(arrayOfCardsOnHand[getPassIndex()]);
-					putCardOnToField(getPassIndex(), 1); // CardPosition in arrayList, card field button position
-					putCardOnToFieldPlayer2(getPassIndex(), 1);
-					
-					arrayOfCardsOnHand[getPassIndex()] = "Null";
 				}
 			}
 		});
@@ -294,29 +365,31 @@ public class FrayCardGame{
 		yourFieldCards[1].addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if(passIndex == 99) {JOptionPane.showMessageDialog(null, "Please chose a card to put onto the field first!");}
+				else if (passIndex == 8) {
+					setText(yourFieldCards[1].getText());
+					setText2(yourFieldCards[1].getText());
+				}
 				else {
 					
-					Collections.sort(fullpassList, new Comparator<FrayCard>() {
-						public int compare(FrayCard c1, FrayCard c2) {
-							return c1.getCardName().compareToIgnoreCase(c2.getCardName());
-						}
-					});
+					int index1 = searchForCard(arrayOfCardsOnHand[getPassIndex()]);
 					
-					FrayCard searchKey = new FrayCard(null, arrayOfCardsOnHand[getPassIndex()], 0,  0, 0, "", "", 0, "", 0, 0, 0, 0);
 					
-					int index1 = Collections.binarySearch(fullpassList, searchKey, new Comparator<FrayCard>() {
-						public int compare(FrayCard c1, FrayCard c2) {
-							return c1.getCardName().compareToIgnoreCase(c2.getCardName());
-						}
-					});
+					int cardEnergyCost = fullpassList.get(index1).getEnergyCost();
+					int calculation = getManaValue() - cardEnergyCost;
+					if(calculation >= 0 ) {
+						setManaValue(calculation);
+						lblmanaValue.setText(getManaValue() + "/" + 10);
+						yourFieldCards[1].setText(arrayOfCardsOnHand[getPassIndex()]);
+						putCardOnToField(getPassIndex(), 2); // CardPosition in arrayList, card field button position
+						putCardOnToFieldPlayer2(getPassIndex(), 2);
+						
+						arrayOfCardsOnHand[getPassIndex()] = "Null";
+						passIndex = 8;
+					}
 					
-					JOptionPane.showMessageDialog(null, "Found in PassList: " + fullpassList.get(index1).getCardName());
-					System.out.println(getPassIndex());
-					yourFieldCards[1].setText(arrayOfCardsOnHand[getPassIndex()]);
-					putCardOnToField(getPassIndex(), 2); // CardPosition in arrayList, card field button position
-					putCardOnToFieldPlayer2(getPassIndex(), 2);
-					
-					arrayOfCardsOnHand[getPassIndex()] = "Null";
+					else {
+						JOptionPane.showMessageDialog(null, "You will have no mana!");
+					}
 				}
 			}
 		});
@@ -324,31 +397,29 @@ public class FrayCardGame{
 		yourFieldCards[2].addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if(passIndex == 99) {JOptionPane.showMessageDialog(null, "Please chose a card to put onto the field first!");}
+				else if (passIndex == 8) {
+					setText(yourFieldCards[2].getText());
+					setText2(yourFieldCards[2].getText());
+				}
 				else {
-					//yourFieldCard1.setText(passList.get(passIndex).getCardName());
+					int index1 = searchForCard(arrayOfCardsOnHand[getPassIndex()]);
 					
+					int cardEnergyCost = fullpassList.get(index1).getEnergyCost();
+					int calculation = getManaValue() - cardEnergyCost;
+					if(calculation >= 0 ) {
+						setManaValue(calculation);
+						lblmanaValue.setText(getManaValue() + "/" + 10);
+						yourFieldCards[2].setText(arrayOfCardsOnHand[getPassIndex()]);
+						putCardOnToField(getPassIndex(), 3); // CardPosition in arrayList, card field button position
+						putCardOnToFieldPlayer2(getPassIndex(), 3);
+						
+						arrayOfCardsOnHand[getPassIndex()] = "Null";
+						passIndex = 8;
+					}
 					
-					Collections.sort(fullpassList, new Comparator<FrayCard>() {
-						public int compare(FrayCard c1, FrayCard c2) {
-							return c1.getCardName().compareToIgnoreCase(c2.getCardName());
-						}
-					});
-					
-					FrayCard searchKey = new FrayCard(null, arrayOfCardsOnHand[getPassIndex()], 0,  0, 0, "", "", 0, "", 0, 0, 0, 0);
-					
-					int index1 = Collections.binarySearch(fullpassList, searchKey, new Comparator<FrayCard>() {
-						public int compare(FrayCard c1, FrayCard c2) {
-							return c1.getCardName().compareToIgnoreCase(c2.getCardName());
-						}
-					});
-					
-					JOptionPane.showMessageDialog(null, "Found in PassList: " + fullpassList.get(index1).getCardName());
-					System.out.println(getPassIndex());
-					yourFieldCards[2].setText(arrayOfCardsOnHand[getPassIndex()]);
-					putCardOnToField(getPassIndex(), 3); // CardPosition in arrayList, card field button position
-					putCardOnToFieldPlayer2(getPassIndex(), 3);
-					
-					arrayOfCardsOnHand[getPassIndex()] = "Null";
+					else {
+						JOptionPane.showMessageDialog(null, "You will have no mana!");
+					}
 				}
 			}
 		});
@@ -356,31 +427,29 @@ public class FrayCardGame{
 		yourFieldCards[3].addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if(passIndex == 99) {JOptionPane.showMessageDialog(null, "Please chose a card to put onto the field first!");}
+				else if (passIndex == 8) {
+					setText(yourFieldCards[3].getText());
+					setText2(yourFieldCards[3].getText());
+				}
 				else {
-					//yourFieldCard1.setText(passList.get(passIndex).getCardName());
+					int index1 = searchForCard(arrayOfCardsOnHand[getPassIndex()]);
 					
+					int cardEnergyCost = fullpassList.get(index1).getEnergyCost();
+					int calculation = getManaValue() - cardEnergyCost;
+					if(calculation >= 0 ) {
+						setManaValue(calculation);
+						lblmanaValue.setText(getManaValue() + "/" + 10);
+						yourFieldCards[3].setText(arrayOfCardsOnHand[getPassIndex()]);
+						putCardOnToField(getPassIndex(), 4); // CardPosition in arrayList, card field button position
+						putCardOnToFieldPlayer2(getPassIndex(), 4);
 					
-					Collections.sort(fullpassList, new Comparator<FrayCard>() {
-						public int compare(FrayCard c1, FrayCard c2) {
-							return c1.getCardName().compareToIgnoreCase(c2.getCardName());
-						}
-					});
+						arrayOfCardsOnHand[getPassIndex()] = "Null";
+						passIndex = 8;
+					}
 					
-					FrayCard searchKey = new FrayCard(null, arrayOfCardsOnHand[getPassIndex()], 0,  0, 0, "", "", 0, "", 0, 0, 0, 0);
-					
-					int index1 = Collections.binarySearch(fullpassList, searchKey, new Comparator<FrayCard>() {
-						public int compare(FrayCard c1, FrayCard c2) {
-							return c1.getCardName().compareToIgnoreCase(c2.getCardName());
-						}
-					});
-					
-					JOptionPane.showMessageDialog(null, "Found in PassList: " + fullpassList.get(index1).getCardName());
-					System.out.println(getPassIndex());
-					yourFieldCards[3].setText(arrayOfCardsOnHand[getPassIndex()]);
-					putCardOnToField(getPassIndex(), 4); // CardPosition in arrayList, card field button position
-					putCardOnToFieldPlayer2(getPassIndex(), 4);
-					
-					arrayOfCardsOnHand[getPassIndex()] = "Null";
+					else {
+						JOptionPane.showMessageDialog(null, "You will have no mana!");
+					}
 				}
 			}
 		});
@@ -388,31 +457,29 @@ public class FrayCardGame{
 		yourFieldCards[4].addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if(passIndex == 99) {JOptionPane.showMessageDialog(null, "Please chose a card to put onto the field first!");}
+				else if (passIndex == 8) {
+					setText(yourFieldCards[4].getText());
+					setText2(yourFieldCards[4].getText());
+				}
 				else {
-					//yourFieldCard1.setText(passList.get(passIndex).getCardName());
+					int index1 = searchForCard(arrayOfCardsOnHand[getPassIndex()]);
 					
+					int cardEnergyCost = fullpassList.get(index1).getEnergyCost();
+					int calculation = getManaValue() - cardEnergyCost;
+					if(calculation >= 0 ) {
+						setManaValue(calculation);
+						lblmanaValue.setText(getManaValue() + "/" + 10);
+						yourFieldCards[4].setText(arrayOfCardsOnHand[getPassIndex()]);
+						putCardOnToField(getPassIndex(), 5); // CardPosition in arrayList, card field button position
+						putCardOnToFieldPlayer2(getPassIndex(), 5);
 					
-					Collections.sort(fullpassList, new Comparator<FrayCard>() {
-						public int compare(FrayCard c1, FrayCard c2) {
-							return c1.getCardName().compareToIgnoreCase(c2.getCardName());
-						}
-					});
+						arrayOfCardsOnHand[getPassIndex()] = "Null";
+						passIndex = 8;
+					}
 					
-					FrayCard searchKey = new FrayCard(null, arrayOfCardsOnHand[getPassIndex()], 0,  0, 0, "", "", 0, "", 0, 0, 0, 0);
-					
-					int index1 = Collections.binarySearch(fullpassList, searchKey, new Comparator<FrayCard>() {
-						public int compare(FrayCard c1, FrayCard c2) {
-							return c1.getCardName().compareToIgnoreCase(c2.getCardName());
-						}
-					});
-					
-					JOptionPane.showMessageDialog(null, "Found in PassList: " + fullpassList.get(index1).getCardName());
-					System.out.println(getPassIndex());
-					yourFieldCards[4].setText(arrayOfCardsOnHand[getPassIndex()]);
-					putCardOnToField(getPassIndex(), 5); // CardPosition in arrayList, card field button position
-					putCardOnToFieldPlayer2(getPassIndex(), 5);
-					
-					arrayOfCardsOnHand[getPassIndex()] = "Null";
+					else {
+						JOptionPane.showMessageDialog(null, "You will have no mana!");
+					}
 				}
 			}
 		});
@@ -420,34 +487,296 @@ public class FrayCardGame{
 		yourFieldCards[5].addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if(passIndex == 99) {JOptionPane.showMessageDialog(null, "Please chose a card to put onto the field first!");}
+				else if (passIndex == 8) {
+					setText(yourFieldCards[5].getText());
+					setText2(yourFieldCards[5].getText());
+				}
 				else {
-					//yourFieldCard1.setText(passList.get(passIndex).getCardName());
+					int index1 = searchForCard(arrayOfCardsOnHand[getPassIndex()]);
 					
+					int cardEnergyCost = fullpassList.get(index1).getEnergyCost();
+					int calculation = getManaValue() - cardEnergyCost;
+					if(calculation >= 0 ) {
+						setManaValue(calculation);
+						lblmanaValue.setText(getManaValue() + "/" + 10);
+						yourFieldCards[5].setText(arrayOfCardsOnHand[getPassIndex()]);
+						putCardOnToField(getPassIndex(), 6); // CardPosition in arrayList, card field button position
+						putCardOnToFieldPlayer2(getPassIndex(), 6);
 					
-					Collections.sort(fullpassList, new Comparator<FrayCard>() {
-						public int compare(FrayCard c1, FrayCard c2) {
-							return c1.getCardName().compareToIgnoreCase(c2.getCardName());
-						}
-					});
+						arrayOfCardsOnHand[getPassIndex()] = "Null";
+						passIndex = 8;
+					}
 					
-					FrayCard searchKey = new FrayCard(null, arrayOfCardsOnHand[getPassIndex()], 0,  0, 0, "", "", 0, "", 0, 0, 0, 0);
-					
-					int index1 = Collections.binarySearch(fullpassList, searchKey, new Comparator<FrayCard>() {
-						public int compare(FrayCard c1, FrayCard c2) {
-							return c1.getCardName().compareToIgnoreCase(c2.getCardName());
-						}
-					});
-					
-					JOptionPane.showMessageDialog(null, "Found in PassList: " + fullpassList.get(index1).getCardName());
-					System.out.println(getPassIndex());
-					yourFieldCards[5].setText(arrayOfCardsOnHand[getPassIndex()]);
-					putCardOnToField(getPassIndex(), 6); // CardPosition in arrayList, card field button position
-					putCardOnToFieldPlayer2(getPassIndex(), 6);
-					
-					arrayOfCardsOnHand[getPassIndex()] = "Null";
+					else {
+						JOptionPane.showMessageDialog(null, "You will have no mana!");
+					}
 				}
 			}
 		});
+	}
+	
+	void removeCardIfDead() {
+		try {
+			Connection con = JDBConnector.getCon();
+			
+			PreparedStatement ps;
+			String sql = "SELECT SentToPlayerUsername FROM sql3282320." + getUsername() + "_SentGameInvitesTable WHERE SecondGameInviteStatus = 'Accepted'";
+			ps = con.prepareStatement(sql);
+			ResultSet myRs = ps.executeQuery();
+			
+			while(myRs.next()) {
+				setOpponentUsername(myRs.getString("SentToPlayerUsername"));
+				PreparedStatement ps1;
+				String sql1 = "SELECT CardHealthPoints, CardPositionInArrayList FROM sql3282320." + getUsername() + "_VS_"  + getOpponentUsername() + "_FrayCardGame WHERE CardPositionInArrayList >= '1' AND PlayerName = '" + getUsername() + "'";
+				ps1 = con.prepareStatement(sql1);
+				ResultSet myRs1 = ps1.executeQuery();
+				
+				while(myRs1.next()) {
+					int cardHealth = myRs1.getInt("CardHealthPoints");
+					int cardPositionInArrayList = myRs1.getInt("CardPositionInArrayList");
+					
+					if(cardHealth <= 0) {
+						yourFieldCards[cardPositionInArrayList-1].setText("Card " + cardPositionInArrayList);//////////////////////////////////////////////////////////////////////
+						
+						PreparedStatement ps66;
+						String sql100 = "DELETE FROM sql3282320." + getUsername()  + "_VS_" + getOpponentUsername() + "_FrayCardGame WHERE PlayerName = '" + getUsername() + "' AND CardPositionInArrayList = '"  + cardPositionInArrayList + "';";
+						ps66 = con.prepareStatement(sql100);
+						ps66.execute();
+						
+						String sql2 = "INSERT INTO sql3282320." + getUsername() + "_VS_" + getOpponentUsername() + "_FrayCardGame(PlayerName,CardPositionInArrayList) VALUES(?,?);";
+						PreparedStatement ps2 = con.prepareStatement(sql2);
+						ps2.setString(1, getUsername());
+						ps2.setString(2, String.valueOf(cardPositionInArrayList));
+						ps2.execute();
+					}
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	void removeCardIfDead2() {
+		try {
+			Connection con = JDBConnector.getCon();
+			
+			PreparedStatement ps;
+			String sql = "SELECT SenderUsername FROM sql3282320." + getUsername() + "_ReceivedGamedInvitesTable WHERE SecondGameInviteStatus = 'Accepted'";
+			ps = con.prepareStatement(sql);
+			ResultSet myRs = ps.executeQuery();
+			
+			while(myRs.next()) {
+				setOpponentUsername(myRs.getString("SenderUsername"));	
+				PreparedStatement ps1;
+				String sql1 = "SELECT CardHealthPoints, CardPositionInArrayList FROM sql3282320." + getOpponentUsername() + "_VS_"  + getUsername() + "_FrayCardGame WHERE CardPositionInArrayList >= '1' AND PlayerName = '" + getUsername() + "'";
+				ps1 = con.prepareStatement(sql1);
+				ResultSet myRs1 = ps1.executeQuery();
+				
+				while(myRs1.next()) {
+					int cardHealth = myRs1.getInt("CardHealthPoints");
+					int cardPositionInArrayList = myRs1.getInt("CardPositionInArrayList");
+					
+					if(cardHealth <= 0) {
+						yourFieldCards[cardPositionInArrayList-1].setText("Card " + cardPositionInArrayList);//////////////////////////////////////////////////////////////////////
+						
+						PreparedStatement ps66;
+						String sql100 = "DELETE FROM sql3282320." + getOpponentUsername()  + "_VS_" + getUsername() + "_FrayCardGame WHERE PlayerName = '" + getUsername() + "' AND CardPositionInArrayList = '"  + cardPositionInArrayList + "';";
+						ps66 = con.prepareStatement(sql100);
+						ps66.execute();
+						
+						String sql2 = "INSERT INTO sql3282320." + getOpponentUsername() + "_VS_" + getUsername() + "_FrayCardGame(PlayerName,CardPositionInArrayList) VALUES(?,?);";
+						PreparedStatement ps2 = con.prepareStatement(sql2);
+						ps2.setString(1, getUsername());
+						ps2.setString(2, String.valueOf(cardPositionInArrayList));
+						ps2.execute();
+					}
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	void setText(String name) {
+			try {
+				Connection con = JDBConnector.getCon();
+				
+				PreparedStatement ps;
+				String sql = "SELECT SentToPlayerUsername FROM sql3282320." + getUsername() + "_SentGameInvitesTable WHERE SecondGameInviteStatus = 'Accepted'";
+				ps = con.prepareStatement(sql);
+				ResultSet myRs = ps.executeQuery();
+				
+				while(myRs.next()) {
+					setOpponentUsername(myRs.getString("SentToPlayerUsername"));
+					PreparedStatement ps1;
+					String sql1 = "Select * FROM sql3282320." + getUsername() + "_VS_" + getOpponentUsername() + "_FrayCardGame WHERE CardName = '" + name + "'";
+					ps1 = con.prepareStatement(sql1);
+					ResultSet myRs1 = ps1.executeQuery();
+					
+					while(myRs1.next()) {
+						cardViewer.setLblcn(myRs1.getString("CardName"));//fullpassList.get(index1).getCardName());
+						cardViewer.setLblap(myRs1.getInt("CardAttackPoints"));//fullpassList.get(index1).getCardAttackPoints());
+						cardViewer.setLblhp(myRs1.getInt("CardHealthPoints"));//fullpassList.get(index1).getCardHealthPoints());
+						cardViewer.setLblct(myRs1.getString("CardType"));//fullpassList.get(index1).getCardType());
+						cardViewer.setLblec(myRs1.getInt("EnergyCost"));//fullpassList.get(index1).getEnergyCost());
+						cardViewer.setLblhb(myRs1.getInt("CardSpellValueHealth"));//fullpassList.get(index1).getSpellValueHealth());
+						cardViewer.setLblapb(myRs1.getInt("CardSpellValueAttack"));//fullpassList.get(index1).getSpellValueAttack());
+						//cardViewer.setLblerb(myRs1.getInt("SpellValueCost"));//fullpassList.get(index1).getSpellValueCost());
+						//cardViewer.setLblarb(myRs1.getInt("SpellValueArmor"));//fullpassList.get(index1).getSpellValueArmor());
+					}
+				}
+			
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
+	
+	void setTextInHandCards(String name) {
+		Collections.sort(fullpassList, new Comparator<FrayCard>() {
+			public int compare(FrayCard c1, FrayCard c2) {
+				return c1.getCardName().compareToIgnoreCase(c2.getCardName());
+			}
+		});
+	
+		FrayCard searchKey = new FrayCard(null, name, 0,  0, 0, "", "", 0, "", 0, 0, 0, 0);
+	
+		int index1 = Collections.binarySearch(fullpassList, searchKey, new Comparator<FrayCard>() {
+			public int compare(FrayCard c1, FrayCard c2) {
+				return c1.getCardName().compareToIgnoreCase(c2.getCardName());
+			}
+		});
+	
+		cardViewer.setLblcn(fullpassList.get(index1).getCardName());
+		cardViewer.setLblap(fullpassList.get(index1).getCardAttackPoints());
+		cardViewer.setLblhp(fullpassList.get(index1).getCardHealthPoints());
+		cardViewer.setLblct(fullpassList.get(index1).getCardType());
+		cardViewer.setLblec(fullpassList.get(index1).getEnergyCost());
+		cardViewer.setLblhb(fullpassList.get(index1).getSpellValueHealth());
+		cardViewer.setLblapb(fullpassList.get(index1).getSpellValueAttack());
+		cardViewer.setLblerb(fullpassList.get(index1).getSpellValueCost());
+		cardViewer.setLblarb(fullpassList.get(index1).getSpellValueArmor());
+	}
+	
+	void setText2(String name) {
+			try {
+				Connection con = JDBConnector.getCon();
+		
+				PreparedStatement ps;
+				String sql = "SELECT SenderUsername FROM sql3282320." + getUsername() + "_ReceivedGamedInvitesTable WHERE SecondGameInviteStatus = 'Accepted'";
+				ps = con.prepareStatement(sql);
+				ResultSet myRs = ps.executeQuery();
+		
+				while(myRs.next()) {
+					setOpponentUsername(myRs.getString("SenderUsername"));	
+					PreparedStatement ps1;
+					String sql1 = "Select * FROM sql3282320." + getOpponentUsername() + "_VS_" + getUsername() + "_FrayCardGame WHERE CardName = '" + name + "'";
+					ps1 = con.prepareStatement(sql1);
+					ResultSet myRs1 = ps1.executeQuery();
+			
+					while(myRs1.next()) {
+						cardViewer.setLblcn(myRs1.getString("CardName"));//fullpassList.get(index1).getCardName());
+						cardViewer.setLblap(myRs1.getInt("CardAttackPoints"));//fullpassList.get(index1).getCardAttackPoints());
+						cardViewer.setLblhp(myRs1.getInt("CardHealthPoints"));//fullpassList.get(index1).getCardHealthPoints());
+						cardViewer.setLblct(myRs1.getString("CardType"));//fullpassList.get(index1).getCardType());
+						cardViewer.setLblec(myRs1.getInt("EnergyCost"));//fullpassList.get(index1).getEnergyCost());
+						cardViewer.setLblhb(myRs1.getInt("CardSpellValueHealth"));//fullpassList.get(index1).getSpellValueHealth());
+						cardViewer.setLblapb(myRs1.getInt("CardSpellValueAttack"));//fullpassList.get(index1).getSpellValueAttack());
+						//cardViewer.setLblerb(myRs1.getInt("SpellValueCost"));//fullpassList.get(index1).getSpellValueCost());
+						//cardViewer.setLblarb(myRs1.getInt("SpellValueArmor"));//fullpassList.get(index1).getSpellValueArmor());
+					}
+				}
+			} catch (SQLException e2) {e2.printStackTrace();}
+		}
+	
+	int searchForCard(String name) {
+		Collections.sort(fullpassList, new Comparator<FrayCard>() {
+			public int compare(FrayCard c1, FrayCard c2) {
+				return c1.getCardName().compareToIgnoreCase(c2.getCardName());
+			}
+		});
+		
+		FrayCard searchKey = new FrayCard(null, name, 0,  0, 0, "", "", 0, "", 0, 0, 0, 0);
+		
+		int index1 = Collections.binarySearch(fullpassList, searchKey, new Comparator<FrayCard>() {
+			public int compare(FrayCard c1, FrayCard c2) {
+				return c1.getCardName().compareToIgnoreCase(c2.getCardName());
+			}
+		});
+		
+		return index1;
+	}
+	
+	void updateEnemyFieldPlayer1() {// 1 to 2
+		try {
+			Connection con = JDBConnector.getCon();
+			
+			PreparedStatement ps;
+			String sql = "SELECT SentToPlayerUsername FROM sql3282320." + getUsername() + "_SentGameInvitesTable WHERE SecondGameInviteStatus = 'Accepted'";
+			ps = con.prepareStatement(sql);
+			ResultSet myRs = ps.executeQuery();
+			
+			while(myRs.next()) {
+				setOpponentUsername(myRs.getString("SentToPlayerUsername"));
+				PreparedStatement ps1;
+				String sql1 = "SELECT CardName, CardPositionInArrayList FROM sql3282320." + getUsername() + "_VS_" + getOpponentUsername() + "_FrayCardGame WHERE PlayerName = '" + getOpponentUsername() +"' AND CardPositionInArrayList BETWEEN '1' AND '6'";
+				ps1 = con.prepareStatement(sql1);
+				ResultSet myRs1 = ps1.executeQuery();
+				//int i = 0;
+				while(myRs1.next()) {
+					int cardPositionInArrayList = myRs1.getInt("CardPositionInArrayList");
+					//if(i >= 6) {break;}
+					//if ((cardPositionInArrayList != 10) || (cardPositionInArrayList < 6)) {
+					//JOptionPane.showMessageDialog(null, cardPositionInArrayList);
+						enemyFieldCards[cardPositionInArrayList-1].setText(myRs1.getString("CardName"));
+						//System.out.println("EnemyFieldCard getText: " + enemyFieldCards[cardPositionInArrayList].getText());
+						//System.out.println("ActualName of Card from server: " + myRs1.getString("CardName"));
+						//i++;
+					//}
+					
+					//else if (cardPositionInArrayList == 10) {
+					//	break;
+					//}
+				}
+			}
+		} catch (SQLException e) {e.printStackTrace();}
+	}
+	void updateEnemyFieldPlayer2() {/*2 to 1*/
+		try {
+			
+			Connection con = JDBConnector.getCon();
+			
+			PreparedStatement ps;
+			String sql = "SELECT SenderUsername FROM sql3282320." + getUsername() + "_ReceivedGamedInvitesTable WHERE SecondGameInviteStatus = 'Accepted'";
+			ps = con.prepareStatement(sql);
+			ResultSet myRs = ps.executeQuery();
+			
+			while(myRs.next()) {
+				setOpponentUsername(myRs.getString("SenderUsername"));	
+				PreparedStatement ps1;
+				String sql1 = "SELECT CardName, CardPositionInArrayList FROM sql3282320." + getOpponentUsername() + "_VS_" + getUsername() + "_FrayCardGame WHERE PlayerName = '" + getOpponentUsername() +"' AND CardPositionInArrayList BETWEEN '1' AND '6'";
+				ps1 = con.prepareStatement(sql1);
+				ResultSet myRs1 = ps1.executeQuery();
+				//int i = 0;
+				while(myRs1.next()) {
+					//if(i >= 6) {break;}
+					int cardPositionInArrayList = myRs1.getInt("CardPositionInArrayList");
+					//JOptionPane.showMessageDialog(null, cardPositionInArrayList);
+				//if ((cardPositionInArrayList != 10) || (cardPositionInArrayList < 6)) {
+					//if(cardPositionInArrayList == 5) {enemyFieldCards[cardPositionInArrayList].setText(myRs1.getString("CardName"));}
+					//else {
+						enemyFieldCards[cardPositionInArrayList-1].setText(myRs1.getString("CardName"));
+					//}
+					//System.out.println("EnemyFieldCard getText: " + enemyFieldCards[cardPositionInArrayList].getText());
+					//System.out.println("ActualName of Card from server: " + myRs1.getString("CardName"));
+					//i++;
+				//}
+				//else if (cardPositionInArrayList == 10) {
+				//	break;
+				//}
+				}
+			}
+		} catch(SQLException e) {e.printStackTrace();}
 	}
 	
 	void getCurrentPlayerTurnStatus() {
@@ -470,11 +799,15 @@ public class FrayCardGame{
 					ResultSet myRs1 = ps1.executeQuery();
 					while(myRs1.next()) {
 						setCurrentTurnStatus(myRs1.getString("PlayerTurnStatus"));
-						System.out.println(getCurrentTurnStatus());
-						
+						lblenemyraceimage.setText(getOpponentUsername());
+						lblenemyraceimage.setFont(new Font("Arial", Font.PLAIN, 14));
+						lblenemyraceimage.setForeground(Color.WHITE);
+						lblenemyraceimage.setHorizontalTextPosition(JButton.CENTER);
+						lblenemyraceimage.setVerticalTextPosition(JButton.CENTER);
+					
 						if(getCurrentTurnStatus().equalsIgnoreCase("Turn")) {
 							lblturnstatus.setText("Your Turn!");
-							System.out.println("YourUsername + EnemyUsername and its your turn" + getCurrentTurnStatus());
+							
 //							enemyFieldCard1.setEnabled(false);
 //							enemyFieldCard2.setEnabled(false);
 //							enemyFieldCard3.setEnabled(false);
@@ -490,12 +823,11 @@ public class FrayCardGame{
 							btnEndTurn.setEnabled(true); // Your end turn button
 							//countdownTimer.schedule(new TimerTask() {int second = 60; @Override public void run() {lblglobaltimer.setText(String.valueOf(second--));}},0, 1000);	
 							//endTurn();////////////////////////////////////////////////////////////
-							turnCountdownTimer();
 						}
 						
 						else if(getCurrentTurnStatus().equalsIgnoreCase("NotTurn")) {
 							lblturnstatus.setText("Enemy's Turn!");
-							System.out.println("YourUsername + EnemyUsername and its not your turn" + getCurrentTurnStatus());
+					
 							yourFieldCards[0].setEnabled(false);
 							yourFieldCards[1].setEnabled(false);
 							yourFieldCards[2].setEnabled(false);
@@ -505,7 +837,6 @@ public class FrayCardGame{
 							btnEndTurn.setEnabled(false); // Your end turn button
 							//endTurn();////////////////////////////////////////////////////////////
 							//countdownTimer.schedule(new TimerTask() {int second = 60; @Override public void run() {lblglobaltimer.setText(String.valueOf(second--));}},0, 1000);
-							turnCountdownTimer();
 						}
 					}
 					} catch (java.sql.SQLSyntaxErrorException e) {
@@ -516,7 +847,7 @@ public class FrayCardGame{
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		System.out.println(getCurrentTurnStatus() + "//");
+		
 	}
 	
 	void getCurrentPlayerTurnStatusPlayer2() {
@@ -538,11 +869,15 @@ public class FrayCardGame{
 				ResultSet myRs11 = ps11.executeQuery();
 					while(myRs11.next()) {
 						setCurrentTurnStatus(myRs11.getString("PlayerTurnStatus"));
-						System.out.println(getCurrentTurnStatus());
+						lblenemyraceimage.setText(getOpponentUsername());
+						lblenemyraceimage.setFont(new Font("Arial", Font.PLAIN, 14));
+						lblenemyraceimage.setForeground(Color.WHITE);
+						lblenemyraceimage.setHorizontalTextPosition(JButton.CENTER);
+						lblenemyraceimage.setVerticalTextPosition(JButton.CENTER);
 
 						if(getCurrentTurnStatus().equalsIgnoreCase("Turn")) {
 							lblturnstatus.setText("Your Turn!");
-							System.out.println("EnemyUsername + YourUsername and its your Turn" + getCurrentTurnStatus());
+				
 //							enemyFieldCard1.setEnabled(false);
 //							enemyFieldCard2.setEnabled(false);
 //							enemyFieldCard3.setEnabled(false);
@@ -558,12 +893,10 @@ public class FrayCardGame{
 							btnEndTurn.setEnabled(true); // Enemy's End turn Button
 							//endTurnPlayer2();////////////////////////////////////////////////////////////
 							//countdownTimer.schedule(new TimerTask() {int second = 60; @Override public void run() {lblglobaltimer.setText(String.valueOf(second--));}},0, 1000);
-							turnCountdownTimerPlayer2();
 						}
 		
 						else if(getCurrentTurnStatus().equalsIgnoreCase("NotTurn")) {
 							lblturnstatus.setText("Enemy's Turn!");
-							System.out.println("EnemyUsername + YourUsername and its not your Turn" + getCurrentTurnStatus());
 							yourFieldCards[0].setEnabled(false);
 							yourFieldCards[1].setEnabled(false);
 							yourFieldCards[2].setEnabled(false);
@@ -573,147 +906,10 @@ public class FrayCardGame{
 							btnEndTurn.setEnabled(false); // Enemy's End turn Button
 							//endTurnPlayer2();////////////////////////////////////////////////////////////
 							//countdownTimer.schedule(new TimerTask() {int second = 60; @Override public void run() {lblglobaltimer.setText(String.valueOf(second--));}},0, 1000);
-							turnCountdownTimerPlayer2();
 						}
 					}
 			}
 		} catch(SQLException e) {
-			e.printStackTrace();
-		}
-		System.out.println(getCurrentTurnStatus() + "////");
-	}
-	
-	void turnCountdownTimer() {
-		try {
-				Connection con = JDBConnector.getCon();
-				PreparedStatement ps;
-				String sql = "SELECT SentToPlayerUsername FROM sql3282320." + getUsername() + "_SentGameInvitesTable WHERE SecondGameInviteStatus = 'Accepted'";
-				ps = con.prepareStatement(sql);
-				ResultSet myRs = ps.executeQuery();
-				
-				while(myRs.next()) {
-					setOpponentUsername(myRs.getString("SentToPlayerUsername"));
-					PreparedStatement ps1;
-					String sql1 = "SELECT TurnTimer FROM sql3282320." + getUsername() + "_VS_" + getOpponentUsername() + "_FrayCardGame WHERE CardPositionInArrayList = '0' AND PlayerName = '" + getUsername() + "';";
-					ps1 = con.prepareStatement(sql1);
-					ResultSet myRs1 = ps1.executeQuery();
-					while(myRs1.next()) {
-						int timeValue = myRs1.getInt("TurnTimer");
-						lblglobaltimer.setText(String.valueOf(timeValue));
-						timeValue = timeValue - 1; //FrayGame.lblglobaltimer.setText(String.valueOf(second--));
-					
-						Statement myStat = con.createStatement();
-						//UPDATE sql3282320.UserDataTable SET InGame = 'No' WHERE Username = '" + opponentUsername + "';
-						String sql2 = "UPDATE sql3282320." + getUsername() + "_VS_" + getOpponentUsername() + "_FrayCardGame SET TurnTimer = '" + timeValue + "' WHERE CardPositionInArrayList = '0' AND PlayerName = '" + getUsername() + "';";
-						myStat.executeUpdate(sql2);	
-						
-						PreparedStatement ps2;
-						String sql3 = "SELECT TurnTimer FROM sql3282320." + getUsername() + "_VS_" + getOpponentUsername() + "_FrayCardGame WHERE CardPositionInArrayList = '0' AND PlayerName = '" + getUsername() + "';";
-						ps2 = con.prepareStatement(sql3);
-						ResultSet myRs2 = ps2.executeQuery();
-						while(myRs2.next()) {
-							int timeValue1 = myRs2.getInt("TurnTimer");
-							System.out.println(timeValue1);
-							lblglobaltimer.setText(String.valueOf(timeValue1));
-							if(timeValue1 == 0) {endTurn();System.out.println("Timer ENDED1");}
-						}	
-					}
-				}
-		} catch (SQLException e) {e.printStackTrace();}	
-	}
-	
-	void turnCountdownTimerPlayer2() {	
-		try {
-			Connection con = JDBConnector.getCon();
-			PreparedStatement ps;
-			String sql = "SELECT SenderUsername FROM sql3282320." + getUsername() + "_ReceivedGamedInvitesTable WHERE SecondGameInviteStatus = 'Accepted'";
-			ps = con.prepareStatement(sql);
-			ResultSet myRs = ps.executeQuery();
-			
-			while(myRs.next()) {
-				setOpponentUsername(myRs.getString("SenderUsername"));
-				PreparedStatement ps1;
-				String sql1 = "SELECT TurnTimer FROM sql3282320." + getOpponentUsername() + "_VS_" + getUsername() + "_FrayCardGame WHERE CardPositionInArrayList = '0' AND PlayerName = '" + getOpponentUsername() + "';";
-				ps1 = con.prepareStatement(sql1);
-				ResultSet myRs1 = ps1.executeQuery();
-				while(myRs1.next()) {
-					int timeValue = myRs1.getInt("TurnTimer");
-					System.out.println(timeValue);
-					lblglobaltimer.setText(String.valueOf(timeValue));
-					if(timeValue == 0) {endTurnPlayer2();System.out.println("Timer ENDED2");}
-				}		
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	void resetTurnCountDownTimer() {
-		try {// Player 1
-			Connection con = JDBConnector.getCon();
-			
-			PreparedStatement ps;
-			String sql = "SELECT SentToPlayerUsername FROM sql3282320." + getUsername() + "_SentGameInvitesTable WHERE SecondGameInviteStatus = 'Accepted'";
-			ps = con.prepareStatement(sql);
-			ResultSet myRs = ps.executeQuery();
-			
-			while(myRs.next()) {
-				setOpponentUsername(myRs.getString("SentToPlayerUsername"));
-				
-				PreparedStatement ps1;
-				String sql1 = "SELECT TurnTimer FROM sql3282320." + getUsername() + "_VS_" + getOpponentUsername() + "_FrayCardGame WHERE CardPositionInArrayList = '0' AND PlayerName = '" + getUsername() + "';";
-				ps1 = con.prepareStatement(sql1);
-				ResultSet myRs1 = ps1.executeQuery();
-				
-				while(myRs1.next()) {
-					int turnTimer = myRs1.getInt("TurnTimer");
-					
-					if (turnTimer <= 0) {
-						Statement myStat = con.createStatement();
-						String sql2 = "UPDATE sql3282320." + getUsername() + "_VS_" + getOpponentUsername() + "_FrayCardGame SET TurnTimer = '60' WHERE PlayerName = '" + getUsername() + "' AND CardPositionInArrayList = '0';";
-						myStat.executeUpdate(sql2);
-						System.out.println("Timer RESET1");
-					}
-				}
-			}
-			
-		} catch (java.sql.SQLSyntaxErrorException e) {// Player 2
-	
-			try {
-				e.printStackTrace();
-				Connection con = JDBConnector.getCon();
-				PreparedStatement ps3;
-				String sql3 = "SELECT SenderUsername FROM sql3282320." + getUsername() + "ReceivedGamedInvitesTable WHERE SecondGameInviteStatus = 'Accepted'";
-				ps3 = con.prepareStatement(sql3);
-				ResultSet myRs2 = ps3.executeQuery();
-				
-				while(myRs2.next()) {
-					setOpponentUsername(myRs2.getString("SenderUsername"));
-					
-					PreparedStatement ps4;
-					String sql4 = "SELECT TurnTimer FROM sql3282320." + getOpponentUsername() + "_VS_" + getUsername() + "_FrayCardGame WHERE CardPositionInArrayList = '0' AND PlayerName = '" + getOpponentUsername() + "';";
-					ps4 = con.prepareStatement(sql4);
-					ResultSet myRs3 = ps4.executeQuery();
-					
-					while(myRs3.next()) {
-						int turnTimer = myRs3.getInt("TurnTimer");
-						
-						if(turnTimer <= 0) {
-							Statement myStat2 = con.createStatement();
-							String sql5 = "UPDATE sql3282320." + getOpponentUsername() + "_VS_" + getUsername() + "_FrayCardGame SET TurnTimer = '60' WHERE PlayerName = '" + getUsername() + "' AND CardPositionInArrayList = '0';";
-							myStat2.executeUpdate(sql5);
-							System.out.println("Timer RESET2");
-						}
-					}
-					
-				}
-				
-			} catch (SQLException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			
-		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
@@ -725,10 +921,9 @@ public class FrayCardGame{
 			String sql = "SELECT SentToPlayerUsername FROM sql3282320." + getUsername() + "_SentGameInvitesTable WHERE SecondGameInviteStatus = 'Accepted'";
 			ps = con.prepareStatement(sql);
 			ResultSet myRs = ps.executeQuery();
-			
+		
 			while(myRs.next()) {
 				setOpponentUsername(myRs.getString("SentToPlayerUsername"));
-				
 				inGameStatusCheckSQL();
 			}
 	
@@ -742,10 +937,9 @@ public class FrayCardGame{
 			String sql = "SELECT SenderUsername FROM sql3282320." + getUsername() + "_ReceivedGamedInvitesTable WHERE SecondGameInviteStatus = 'Accepted';";
 			ps = con.prepareStatement(sql);
 			ResultSet myRs = ps.executeQuery();
-				
+			
 			while(myRs.next()) {
 				setOpponentUsername(myRs.getString("SenderUsername"));
-					
 				inGameStatusCheckSQL();
 			}
 		} catch(SQLException e) {e.printStackTrace();}
@@ -761,6 +955,13 @@ public class FrayCardGame{
 			 
 			 while(myRs.next()) {
 				 setOpponentHealth(myRs.getInt("CardHealthPoints"));
+				 if(getOpponentHealth() <= 0) {
+					JOptionPane.showMessageDialog(null, "!VICTORY!");
+					getGameFrame().dispose();
+					timerObjUpdatingGame.cancel();
+					PlayerSelectScreen newFrayGame = new PlayerSelectScreen(getUsername());
+					newFrayGame.getPassFrame().setVisible(true);
+				 }
 			 }	
 		 } catch (SQLSyntaxErrorException e){	
 		 } catch (SQLException e) {
@@ -778,6 +979,47 @@ public class FrayCardGame{
 			 
 			 while(myRs.next()) {
 				 setOpponentHealth(myRs.getInt("CardHealthPoints"));
+				 if(getOpponentHealth() <= 0) {
+						JOptionPane.showMessageDialog(null, "!VICTORY!"); 
+						getGameFrame().dispose();
+						timerObjUpdatingGame.cancel();
+						PlayerSelectScreen newFrayGame = new PlayerSelectScreen(getUsername());
+						newFrayGame.getPassFrame().setVisible(true);
+				}
+			 }
+		} catch (SQLSyntaxErrorException e){	
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+	 }
+	 
+	 void setYourData() {
+		 try {
+			 Connection con = JDBConnector.getCon();
+			 PreparedStatement ps;
+			 String sql = "SELECT CardHealthPoints FROM sql3282320." + getUsername() + "_VS_" + getOpponentUsername() + "_FrayCardGame WHERE PlayerName = '" + getUsername() +"' AND CardPositionInArrayList = '0';";
+			 ps = con.prepareStatement(sql);
+			 ResultSet myRs = ps.executeQuery();
+			 
+			 while(myRs.next()) {
+				 setYourHealth(myRs.getInt("CardHealthPoints"));
+			 }	
+		 } catch (SQLSyntaxErrorException e){	
+		 } catch (SQLException e) {
+			e.printStackTrace();
+		}
+	 }
+	 
+	 void setYourData2() {
+		 try {
+			 Connection con = JDBConnector.getCon();
+			 PreparedStatement ps;
+			 String sql = "SELECT CardHealthPoints FROM sql3282320." + getOpponentUsername() + "_VS_" + getUsername() + "_FrayCardGame WHERE PlayerName = '" + getUsername() +"'  AND CardPositionInArrayList = '10';";
+			 ps = con.prepareStatement(sql);
+			 ResultSet myRs = ps.executeQuery();
+			 
+			 while(myRs.next()) {
+				 setYourHealth(myRs.getInt("CardHealthPoints"));
 			 }
 		} catch (SQLSyntaxErrorException e){	
 		} catch (SQLException e1) {
@@ -786,8 +1028,6 @@ public class FrayCardGame{
 	 }
 	 
 	 void playerSetFirstTurnStatus() {
-			
-			
 			try {
 				Connection con = JDBConnector.getCon();
 				
@@ -800,7 +1040,6 @@ public class FrayCardGame{
 						setOpponentUsername(myRs.getString("SentToPlayerUsername"));
 					
 						int random = (int) (Math.random() + 1);
-						System.out.println(random);
 					
 						// This will work based on how the table player names are set.
 						// 1 = Player one
@@ -840,7 +1079,7 @@ public class FrayCardGame{
 															myStat1.executeUpdate(sql11);
 														} catch (java.sql.SQLSyntaxErrorException e1) {
 															e1.printStackTrace();
-															System.out.print("Opponent1");
+														
 															Statement myStat = con.createStatement();
 															String sql2 = "UPDATE sql3282320." + getOpponentUsername()  + "_VS_" + getUsername() + "_FrayCardGame SET PlayerTurnStatus = 'NotTurn' WHERE PlayerName = '" + getOpponentUsername()  + "';";
 															myStat.executeUpdate(sql2);
@@ -862,7 +1101,7 @@ public class FrayCardGame{
 															myStat1.executeUpdate(sql31);
 														} catch (java.sql.SQLSyntaxErrorException e1) {
 															e1.printStackTrace();
-															System.out.print("Opponent2");
+															
 															Statement myStat = con.createStatement();
 															String sql4 = "UPDATE sql3282320." + getOpponentUsername()  + "_VS_" + getUsername() + "_FrayCardGame SET PlayerTurnStatus = 'NotTurn' WHERE PlayerName = '" + getUsername() + "';";
 															myStat.executeUpdate(sql4);
@@ -897,7 +1136,7 @@ public class FrayCardGame{
 				
 				while(myRs.next()) {
 					setOpponentUsername(myRs.getString("SentToPlayerUsername"));
-					System.out.println("End Turn Username" + opponentUsername);
+		
 					
 					PreparedStatement ps1;
 					String sql11 = "SELECT PlayerTurnStatus FROM sql3282320." + getUsername() + "_VS_" + getOpponentUsername() + "_FrayCardGame WHERE CardPositionInArrayList = '0' AND PlayerName = '" + getUsername() + "';"; 
@@ -915,7 +1154,8 @@ public class FrayCardGame{
 							Statement myStat2 = con.createStatement();
 							String sql2 = "UPDATE sql3282320." + getUsername() + "_VS_" + getOpponentUsername() + "_FrayCardGame SET PlayerTurnStatus = 'Turn' WHERE PlayerName = '" + getOpponentUsername() + "' AND CardPositionInArrayList = '10';";
 							myStat2.executeUpdate(sql2);
-							
+							setManaValue(getManaValue() + 1);
+							lblmanaValue.setText(getManaValue() + "/" + 10);
 							drawCardAtTheEndOfTurn();
 						}
 						
@@ -927,6 +1167,8 @@ public class FrayCardGame{
 							Statement myStat2 = con.createStatement();
 							String sql2 = "UPDATE sql3282320." + getUsername() + "_VS_" + getOpponentUsername() + "_FrayCardGame SET PlayerTurnStatus = 'NotTurn' WHERE PlayerName = '" + getOpponentUsername() + "' AND CardPositionInArrayList = '10';";
 							myStat2.executeUpdate(sql2);
+							setManaValue(getManaValue() + 1);
+							lblmanaValue.setText(getManaValue() + "/" + 10);
 							
 							drawCardAtTheEndOfTurn();
 						}
@@ -968,6 +1210,8 @@ public class FrayCardGame{
 							Statement myStat2 = con.createStatement();
 							String sql2 = "UPDATE sql3282320." + getOpponentUsername() + "_VS_" + getUsername() + "_FrayCardGame SET PlayerTurnStatus = 'NotTurn' WHERE PlayerName = '" + getUsername() + "' AND CardPositionInArrayList = '10';";
 							myStat2.executeUpdate(sql2);
+							setManaValue(getManaValue() + 1);
+							lblmanaValue.setText(getManaValue() + "/" + 10);
 							
 							drawCardAtTheEndOfTurn();
 						}
@@ -980,6 +1224,8 @@ public class FrayCardGame{
 							Statement myStat2 = con.createStatement();
 							String sql2 = "UPDATE sql3282320." + getOpponentUsername() + "_VS_" + getUsername() + "_FrayCardGame SET PlayerTurnStatus = 'Turn' WHERE PlayerName = '" + getUsername() + "' AND CardPositionInArrayList = '10';";
 							myStat2.executeUpdate(sql2);
+							setManaValue(getManaValue() + 1);
+							lblmanaValue.setText(getManaValue() + "/" + 10);
 							
 							drawCardAtTheEndOfTurn();
 						}
@@ -997,6 +1243,7 @@ public class FrayCardGame{
 			 * What I was thinking was to find the same card and than delete.
 			 */
 			try {
+				Collections.shuffle(passList);
 				for(int g = 0; g < 5; g++) {
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 					if(arrayOfCardsOnHand[g].equals("Null")) {
@@ -1007,10 +1254,8 @@ public class FrayCardGame{
 				// Look in arrayOfCardsOnHand and see if the cards are the same as the ones in the list, than dont set.
 			
 				arrayOfCardsOnHand[indexe] = passList.get(indexe).getCardName();
-				JOptionPane.showMessageDialog(null,passList.get(indexe).getCardName());
 				btnCardsInHand[indexe].setText(passList.get(indexe).getCardName());
 				btnCardsInHand[indexe].setIcon(passList.get(indexe).getImage());
-				
 				for(int i = 0; i < btnCardsInHand.length; i++) {
 					btnCardsInHand[i].setVisible(true);
 				}
@@ -1130,7 +1375,6 @@ public class FrayCardGame{
 				ps = con.prepareStatement(sql);
 				ResultSet myRs = ps.executeQuery();
 				
-				System.out.println("PUTCARDONFIELD OPPONENT USERNAME: " + opponentUsername);
 				
 				while(myRs.next()) {
 				//try {
@@ -1147,83 +1391,71 @@ public class FrayCardGame{
 						}
 					});
 					
-					JOptionPane.showMessageDialog(null, "Found in PassList: " + fullpassList.get(index1).getCardName());
 					
-					setOpponentUsername(myRs.getString("SentToPlayerUsername"));
-					System.out.println("PUTCARDONFIELD OPPONENT USERNAME: " + opponentUsername);
-					Statement myStat = con.createStatement();
-					JOptionPane.showMessageDialog(null, fullpassList.get(index1).toString());
-					String sql1 = "UPDATE sql3282320." + getUsername() + "_VS_" + opponentUsername + "_FrayCardGame SET " +
-					"CardImage = '" + String.valueOf(fullpassList.get(index1).getImage()) + "', CardName = '" + String.valueOf(fullpassList.get(index1).getCardName()) 
-					+ "', CardAttackPoints = '" + fullpassList.get(index1).getCardAttackPoints() + "', CardHealthPoints = '" + fullpassList.get(index1).getCardHealthPoints()
-					+ "', CardArmorPoints = '" + fullpassList.get(index1).getCardArmorPoints() + "', CardClass = '" + fullpassList.get(index1).getCardClass() 
-					+ "', CardType = '" + String.valueOf(fullpassList.get(index1).getCardType()) + "', EnergyCost = '" + fullpassList.get(index1).getEnergyCost()
-					+ "', CardState = '" + String.valueOf(fullpassList.get(index1).getCardState()) + "', CardSpellValueHealth = '" + fullpassList.get(index1).getSpellValueHealth()
-					+ "', CardSpellValueAttack = '" + fullpassList.get(index1).getSpellValueAttack() + "'" + "WHERE CardPositionInArrayList = '" + index + "' AND PlayerName = '" + getUsername() + "';";
-					myStat.executeUpdate(sql1);
-					
-				//} catch (SQLException e) {}
-					//JOptionPane.showMessageDialog(null, "Removed: " + fullpassList.get(index1));//////////////////
-					//passList.remove(index1);/////////////////////////////////////////////////////////////////
-					
-					Collections.sort(passList, new Comparator<FrayCard>() {
-						public int compare(FrayCard c1, FrayCard c2) {
-							return c1.getCardName().compareToIgnoreCase(c2.getCardName());
-						}
-					});
-					
-					FrayCard searchKey1 = new FrayCard(null, fullpassList.get(index1).getCardName(), 0,  0, 0, "", "", 0, "", 0, 0, 0, 0);
-					
-					int index2 = Collections.binarySearch(passList, searchKey1, new Comparator<FrayCard>() {
-						public int compare(FrayCard c1, FrayCard c2) {
-							return c1.getCardName().compareToIgnoreCase(c2.getCardName());
-						}
-					});
-					
-					try {
-						JOptionPane.showMessageDialog(null, "Removed: " + passList.get(index2));
-						try {
-							passList.remove(index2);
-						} catch (java.lang.IndexOutOfBoundsException e) {
+						setOpponentUsername(myRs.getString("SentToPlayerUsername"));
+
+						Statement myStat = con.createStatement();
+						String sql1 = "UPDATE sql3282320." + getUsername() + "_VS_" + opponentUsername + "_FrayCardGame SET " +
+						"CardImage = '" + String.valueOf(fullpassList.get(index1).getImage()) + "', CardName = '" + String.valueOf(fullpassList.get(index1).getCardName()) 
+						+ "', CardAttackPoints = '" + fullpassList.get(index1).getCardAttackPoints() + "', CardHealthPoints = '" + fullpassList.get(index1).getCardHealthPoints()
+						+ "', CardArmorPoints = '" + fullpassList.get(index1).getCardArmorPoints() + "', CardClass = '" + fullpassList.get(index1).getCardClass() 
+						+ "', CardType = '" + String.valueOf(fullpassList.get(index1).getCardType()) + "', EnergyCost = '" + fullpassList.get(index1).getEnergyCost()
+						+ "', CardState = '" + String.valueOf(fullpassList.get(index1).getCardState()) + "', CardSpellValueHealth = '" + fullpassList.get(index1).getSpellValueHealth()
+						+ "', CardSpellValueAttack = '" + fullpassList.get(index1).getSpellValueAttack() + "'" + "WHERE CardPositionInArrayList = '" + index + "' AND PlayerName = '" + getUsername() + "';";
+						myStat.executeUpdate(sql1);
+						
+					//} catch (SQLException e) {}
+						//JOptionPane.showMessageDialog(null, "Removed: " + fullpassList.get(index1));//////////////////
+						//passList.remove(index1);/////////////////////////////////////////////////////////////////
+						
 						Collections.sort(passList, new Comparator<FrayCard>() {
 							public int compare(FrayCard c1, FrayCard c2) {
 								return c1.getCardName().compareToIgnoreCase(c2.getCardName());
 							}
 						});
-						FrayCard searchKey11 = new FrayCard(null, fullpassList.get(index1).getCardName(), 0,  0, 0, "", "", 0, "", 0, 0, 0, 0);
 						
-						int index11 = Collections.binarySearch(passList, searchKey11, new Comparator<FrayCard>() {
+						FrayCard searchKey1 = new FrayCard(null, fullpassList.get(index1).getCardName(), 0,  0, 0, "", "", 0, "", 0, 0, 0, 0);
+						
+						int index2 = Collections.binarySearch(passList, searchKey1, new Comparator<FrayCard>() {
 							public int compare(FrayCard c1, FrayCard c2) {
 								return c1.getCardName().compareToIgnoreCase(c2.getCardName());
 							}
 						});
-						passList.remove(index11);
-						btnCardsInHand[cardPosition].setText("Null");
-						btnCardsInHand[cardPosition].setVisible(false);// Reset visible of any cards in this btn array.
-						for (int i = 0; i < btnCardsInHand.length; i++) {
-							System.out.println("Status of cards in hand: " + btnCardsInHand[i].getText());///////////////////
+						
+						try {
+							try {
+								passList.remove(index2);
+							} catch (java.lang.IndexOutOfBoundsException e) {
+							Collections.sort(passList, new Comparator<FrayCard>() {
+								public int compare(FrayCard c1, FrayCard c2) {
+									return c1.getCardName().compareToIgnoreCase(c2.getCardName());
+								}
+							});
+							FrayCard searchKey11 = new FrayCard(null, fullpassList.get(index1).getCardName(), 0,  0, 0, "", "", 0, "", 0, 0, 0, 0);
 							
+							int index11 = Collections.binarySearch(passList, searchKey11, new Comparator<FrayCard>() {
+								public int compare(FrayCard c1, FrayCard c2) {
+									return c1.getCardName().compareToIgnoreCase(c2.getCardName());
+								}
+							});
+							passList.remove(index11);
+							btnCardsInHand[cardPosition].setText("Null");
+							btnCardsInHand[cardPosition].setVisible(false);// Reset visible of any cards in this btn array.
+							Collections.shuffle(passList);
 						}
-					}
-						btnCardsInHand[cardPosition].setText("Null");
-						System.out.println("CARDPOSITION:" + cardPosition);
-						btnCardsInHand[cardPosition].setVisible(false);// Reset visible of any cards in this btn array.
-						for (int i = 0; i < btnCardsInHand.length; i++) {
-							System.out.println("Status of cards in hand: " + btnCardsInHand[i].getText());///////////////////
-						
-						}
-					} catch(java.lang.ArrayIndexOutOfBoundsException e) {
-						btnCardsInHand[cardPosition].setText("Null");
-						System.out.println("CARDPOSITION:" + cardPosition);
-						btnCardsInHand[cardPosition].setVisible(false);// Reset visible of any cards in this btn array.
-						for (int i = 0; i < btnCardsInHand.length; i++) {
-							System.out.println("Status of cards in hand: " + btnCardsInHand[i].getText());///////////////////
-						
-						}
-						continue;
-					}
+							btnCardsInHand[cardPosition].setText("Null");
+				
+							btnCardsInHand[cardPosition].setVisible(false);// Reset visible of any cards in this btn array.
+							
+							Collections.shuffle(passList);
+						} catch(java.lang.ArrayIndexOutOfBoundsException e) {
+							btnCardsInHand[cardPosition].setText("Null");
+							btnCardsInHand[cardPosition].setVisible(false);// Reset visible of any cards in this btn array.
 
-				}
+							Collections.shuffle(passList);
+							continue;
+						}
+					}
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -1239,7 +1471,6 @@ public class FrayCardGame{
 				ResultSet myRs2 = ps3.executeQuery();
 			
 				while(myRs2.next()) {
-					JOptionPane.showMessageDialog(null, "THIS IS PLAYER 2");
 					setOpponentUsername(myRs2.getString("SenderUsername"));
 					
 					Collections.sort(fullpassList, new Comparator<FrayCard>() {
@@ -1256,9 +1487,9 @@ public class FrayCardGame{
 					});
 					
 					//JOptionPane.showMessageDialog(null, "Found in PassList: " + passList.get(index1).getCardName());
-					System.out.println("PUTCARDONFIELD OPPONENT USERNAME: " + opponentUsername);
+	
 					Statement myStat = con.createStatement();
-					JOptionPane.showMessageDialog(null, fullpassList.get(index1).toString());
+			
 					String sql1 = "UPDATE sql3282320." + opponentUsername + "_VS_" + getUsername() + "_FrayCardGame SET " +
 							"CardImage = '" + String.valueOf(fullpassList.get(index1).getImage()) + "', CardName = '" + String.valueOf(fullpassList.get(index1).getCardName()) 
 							+ "', CardAttackPoints = '" + fullpassList.get(index1).getCardAttackPoints() + "', CardHealthPoints = '" + fullpassList.get(index1).getCardHealthPoints()
@@ -1287,32 +1518,25 @@ public class FrayCardGame{
 								passList.remove(index11);
 								btnCardsInHand[cardPosition].setText("Null");
 								btnCardsInHand[cardPosition].setVisible(false);// Reset visible of any cards in this btn array.
-								for (int i = 0; i < btnCardsInHand.length; i++) {
-									System.out.println("Status of cards in hand: " + btnCardsInHand[i].getText());///////////////////
-									
-								}
+								
+								Collections.shuffle(passList);
 							}
 							btnCardsInHand[cardPosition].setText("Null");
 							btnCardsInHand[cardPosition].setVisible(false);// Reset visible of any cards in this btn array.
-							for (int i = 0; i < btnCardsInHand.length; i++) {
-								System.out.println("Status of cards in hand: " + btnCardsInHand[i].getText());///////////////////
-								
-							}
+
+							Collections.shuffle(passList);
 						} catch(java.lang.ArrayIndexOutOfBoundsException e) {
-							JOptionPane.showMessageDialog(null, "Removed");
+					
 							btnCardsInHand[cardPosition].setText("Null");
 							btnCardsInHand[cardPosition].setVisible(false);// Reset visible of any cards in this btn array.
-							for (int i = 0; i < btnCardsInHand.length; i++) {
-								System.out.println("Status of cards in hand: " + btnCardsInHand[i].getText());///////////////////
-								
-							}
+							Collections.shuffle(passList);
 							continue;
 						}
 							//for (int i = 0; i < btnCardsInHand.length; i++) {
 							//	System.out.println("Status of cards in deck: " + passList.get(i));//////////////////////////
 							//}
-							//importCardsIntoYourHands(pass); 
-				}
+							//importCardsIntoYourHands(pass);
+					}
 			
 			} catch (SQLException e1) {
 				// TODO Auto-generated catch block
@@ -1389,5 +1613,21 @@ public class FrayCardGame{
 
 	public void setCurrentTurnStatus(String currentTurnStatus) {
 		this.currentTurnStatus = currentTurnStatus;
+	}
+
+	public int getManaValue() {
+		return manaValue;
+	}
+
+	public void setManaValue(int manaValue) {
+		this.manaValue = manaValue;
+	}
+
+	public int getYourHealth() {
+		return yourHealth;
+	}
+
+	public void setYourHealth(int yourHealth) {
+		this.yourHealth = yourHealth;
 	}
 }

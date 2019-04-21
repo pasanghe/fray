@@ -13,7 +13,6 @@ public class ElfRace implements Fray_Race {
 	
 	private String raceName = "Elf";
 	private String racePassive = "";
-	private int raceHealthNumber = 10;
 	private ArrayList <FrayCard> frayElfCardDeck = new ArrayList<FrayCard>();
 
 	@Override
@@ -24,11 +23,6 @@ public class ElfRace implements Fray_Race {
 	@Override
 	public void setRaceName(String raceName) {
 		this.raceName = raceName;
-	}
-	
-	@Override
-	public void setHealthNumber(int raceHealthNumber) {
-		this.raceHealthNumber = raceHealthNumber;
 	}
 		
 	@Override
@@ -64,6 +58,12 @@ public class ElfRace implements Fray_Race {
 			e.printStackTrace();
 		}
 		return frayElfCardDeck;
+	}
+
+	@Override
+	public void setHealthNumber(int raceHealth) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

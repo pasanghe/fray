@@ -515,11 +515,13 @@ public class PlayerSelectScreen {
 			PreparedStatement ps = con.prepareStatement(sql);
 			ps.execute();
 			
-			String sql11 = "INSERT INTO sql3282320." + playerOne + "_VS_" + playerTwo + "_FrayCardGame(PlayerName,CardPositionInArrayList, CardHealthPoints) VALUES(?,?,?);";
+			String sql11 = "INSERT INTO sql3282320." + playerOne + "_VS_" + playerTwo + "_FrayCardGame(PlayerName,CardPositionInArrayList, CardHealthPoints, CardName, CardType) VALUES(?,?,?,?,?);";
 			PreparedStatement ps11 = con.prepareStatement(sql11);
 			ps11.setString(1, playerOne);
 			ps11.setString(2, String.valueOf(0));
-			ps11.setString(3, String.valueOf(130));
+			ps11.setString(3, String.valueOf(30));
+			ps11.setString(4, playerOne);
+			ps11.setString(5, "Minions");
 			ps11.execute();
 			
 			for(int i = 1; i < 9; i++) {
@@ -530,11 +532,13 @@ public class PlayerSelectScreen {
 				ps1.execute();
 			}
 			
-			String sql22 = "INSERT INTO sql3282320." + playerOne + "_VS_" + playerTwo + "_FrayCardGame(PlayerName,CardPositionInArrayList, CardHealthPoints) VALUES(?,?,?);";
+			String sql22 = "INSERT INTO sql3282320." + playerOne + "_VS_" + playerTwo + "_FrayCardGame(PlayerName,CardPositionInArrayList, CardHealthPoints, CardName, CardType) VALUES(?,?,?,?,?);";
 			PreparedStatement ps22 = con.prepareStatement(sql22);
 			ps22.setString(1, playerTwo);
 			ps22.setString(2, String.valueOf(10));
-			ps22.setString(3, String.valueOf(230));
+			ps22.setString(3, String.valueOf(30));
+			ps22.setString(4, playerTwo);
+			ps22.setString(5, "Minions");
 			ps22.execute();
 			for(int i = 1; i < 9; i++) {
 				String sql2 = "INSERT INTO sql3282320." + playerOne + "_VS_" + playerTwo + "_FrayCardGame(PlayerName,CardPositionInArrayList) VALUES(?,?);";

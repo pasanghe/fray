@@ -4,12 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 
-import javax.swing.ImageIcon;
-
-import fullGame.FrayCardGame;
 import jdbc.JDBConnector;
 import interfaces.Fray_Race;
 
@@ -17,7 +13,6 @@ public class HumanRace implements Fray_Race{
 	
 	private String raceName = "Human";
 	private String racePassive = "";
-	private int raceHealthNumber = 10;
 	private ArrayList <FrayCard> frayHumanCardDeck = new ArrayList<FrayCard>();
 
 	@Override
@@ -31,9 +26,7 @@ public class HumanRace implements Fray_Race{
 	}
 	
 	@Override
-	public void setHealthNumber(int raceHealthNumber) {
-		this.raceHealthNumber = raceHealthNumber;
-	}
+	public void setHealthNumber(int raceHealthNumber) {}
 	
 	@Override
 	public String toString() {

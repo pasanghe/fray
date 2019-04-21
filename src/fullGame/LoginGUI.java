@@ -116,7 +116,6 @@ public class LoginGUI extends JFrame {
 				 dispose();
        			 SignUpGUI newFraySignUpGUI = new SignUpGUI();
        			 newFraySignUpGUI.setVisible(true);
-       			// newFraySignUpGUI.contentPane.setVisible(true);
 			}
 		});
 		btnSignUp.setFont(new Font("Tahoma", Font.PLAIN, 19));

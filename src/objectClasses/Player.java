@@ -10,17 +10,17 @@ import java.util.ArrayList;
 import javax.swing.JOptionPane;
 
 import objectClasses.CardDeck;
-import objectClasses.ElfRace;
-import objectClasses.HumanRace;
 
 /**
  * A class that models each Player in the game. Players have an identifier, which should be unique.
  * @author dancye, 2018
+ * @author Gagandeep, Ghotra 2019
  */
 public class Player//abstract class Player
 {
     private String playerID; //the unique ID for this player
     private String playerRaceName; // the unique Race for this player
+    private int manaValue = 1;
     public ArrayList <FrayCard> frayCardDeck = new ArrayList<FrayCard>();
 
     /**
@@ -34,19 +34,11 @@ public class Player//abstract class Player
     	if(raceName.equalsIgnoreCase("Elf")) {
 			this.playerRaceName = raceName;
 			frayCardDeck = CardDeck.generateDeck("Elf");
-			
-			for(int i = 0; i < frayCardDeck.size(); i++) {
-				System.out.println(frayCardDeck.get(i).toString());
-			}
 		}
 		
 		else if (raceName.equalsIgnoreCase("Human")) {
 			this.playerRaceName = raceName;
 			frayCardDeck = CardDeck.generateDeck("Human");
-			
-			for(int i = 0; i < frayCardDeck.size(); i++) {
-				System.out.println(frayCardDeck.get(i).toString());
-			}
 		}
 		
 		else {
@@ -89,6 +81,14 @@ public class Player//abstract class Player
 
 	public void setPlayerRaceName(String playerRaceName) {
 		this.playerRaceName = playerRaceName;
+	}
+
+	public int getManaValue() {
+		return manaValue;
+	}
+
+	public void setManaValue(int manaValue) {
+		this.manaValue = manaValue;
 	}
 
     /**
