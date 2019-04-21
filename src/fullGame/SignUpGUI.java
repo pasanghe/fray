@@ -19,13 +19,18 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
 import jdbc.JDBConnector;
-
+/**
+ * @author Gagandeep Ghotra, Sang Heon Park, Zain Razvi, Lee Fyye
+ * This class displays out a JFrame that allows the user 
+ * to create a new account. This new account is sent to the database
+ * and the user is sent back to the login page.
+ */
 @SuppressWarnings("serial")
 public class SignUpGUI extends JFrame {
 
 	private JPanel contentPane;
-	private JTextField uTF;
-	private JPasswordField pTF;
+	private JTextField uTF; // Username text field
+	private JPasswordField pTF; // Password text field
 
 	/**
 	 * Create the frame.

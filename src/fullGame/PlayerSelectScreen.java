@@ -31,20 +31,34 @@ import fullGame.FrayCardGame;
 import fullGame.PlayerSelectScreen;
 import objectClasses.Player;
 import jdbc.JDBConnector;
-
+/**
+ * @author Gagandeep Ghotra, Sang Heon Park, Zain Razvi, Lee Fyye
+ * This class displays out a JFrame that allows the user to see
+ * all online and offline users and invite one of them to play a game.
+ * 
+ * In this class there is going to be methods with the same name
+ * just the name could have 'player2' or just 2.
+ * Keep in mind, even though the methods or code have the same purpose, they both 
+ * are meant for connecting to the same database table and doing a task
+ * using different 'perspectives'.
+ * Example: attack1 is you vs enemy. 
+ * Attack1 method/code lets player 1 connect to the db. 
+ * attack2 is enemy vs you.
+ * Attack2 method/code lets player 2 connect to the db. 
+ */
 public class PlayerSelectScreen {
 
 	private JPanel contentPane;
-	private String Username;
-	private Timer timerObjUpdatingTables1;
-	private JTable jtable_Display_Users,
+	private String Username; // Username variable
+	private Timer timerObjUpdatingTables1; // A timer object that will be used to repeat methods every few seconds.
+	private JTable jtable_Display_Users, 
 			jtable_Display_SentGameInvites,
-			jtable_Display_ReceivedGameInvites;
-	private DefaultTableModel jDU = new DefaultTableModel();
-	private DefaultTableModel jDIGI = new DefaultTableModel();
-	private DefaultTableModel jDRGI = new DefaultTableModel();
-	int UserXP;
-	private JFrame passFrame;
+			jtable_Display_ReceivedGameInvites; // JTables for displaying users, sent game invites, and received game invites.
+	private DefaultTableModel jDU = new DefaultTableModel(); // This will be updated in methods and than fed to the JTable
+	private DefaultTableModel jDIGI = new DefaultTableModel(); // This will be updated in methods and than fed to the JTable
+	private DefaultTableModel jDRGI = new DefaultTableModel(); // This will be updated in methods and than few to the JTable
+	int UserXP; // User xp field
+	private JFrame passFrame; // Main JFrame
 
 	public PlayerSelectScreen(String PassUsername) {
 		setUsername(PassUsername);		
@@ -207,7 +221,8 @@ public class PlayerSelectScreen {
 		this.jDRGI = jDRGI;
 	}
 	
-	DefaultTableModel displayUsersOut(DefaultTableModel jDU) throws SQLException { // Used to select all information from the SQLtable and pipe it into the JTables. Only code in this method is used from the video.
+	DefaultTableModel displayUsersOut(DefaultTableModel jDU) throws SQLException { 
+		// Used to select all information from the SQLtable and pipe it into the JTables. Only code in this method is used from the video.
 		//https://www.youtube.com/watch?v=WabQxSMBb8Q - Had to do heavy modification of code.
 			jDU.setRowCount(0);
 			Connection con = JDBConnector.getCon();
@@ -236,7 +251,8 @@ public class PlayerSelectScreen {
 			return jDU;	
 	}
 	
-	DefaultTableModel displaySentGameInvitesOut(DefaultTableModel jDIGI, String Username) throws SQLException { // Used to select all information from the SQLtable and pipe it into the JTables. Only code in this method is used from the video.
+	DefaultTableModel displaySentGameInvitesOut(DefaultTableModel jDIGI, String Username) throws SQLException {
+		// Used to select all information from the SQLtable and pipe it into the JTables. Only code in this method is used from the video.
 		//https://www.youtube.com/watch?v=WabQxSMBb8Q - Had to do heavy modification of code.
 			jDIGI.setRowCount(0);
 			Connection con = JDBConnector.getCon();
@@ -265,7 +281,8 @@ public class PlayerSelectScreen {
 		return jDIGI;
 	}
 	
-	DefaultTableModel displayReceivedGameInvitesOut(DefaultTableModel jDRGI, String Username) throws SQLException { // Used to select all information from the SQLtable and pipe it into the JTables. Only code in this method is used from the video.
+	DefaultTableModel displayReceivedGameInvitesOut(DefaultTableModel jDRGI, String Username) throws SQLException { 
+		// Used to select all information from the SQLtable and pipe it into the JTables. Only code in this method is used from the video.
 		//https://www.youtube.com/watch?v=WabQxSMBb8Q - Had to do heavy modification of code.
 			jDRGI.setRowCount(0);
 			Connection con = JDBConnector.getCon();
@@ -294,7 +311,8 @@ public class PlayerSelectScreen {
 			return jDRGI;
 	}
 	
-	public void sendGameInvite(String username) { // This method will send game invite and adds it to the sent user's recieved. The game invite will be added to the sender's sent game invites table.
+	public void sendGameInvite(String username) { 
+		// This method will send game invite and adds it to the sent user's recieved. The game invite will be added to the sender's sent game invites table.
 		try {
 			Connection con = JDBConnector.getCon();
 			String query = "INSERT INTO sql3282320." + username + "_ReceivedGamedInvitesTable(SenderUsername, SenderXP)  VALUES(?, ?);"; // Add new row to sepcecfic player's received game invites table.
@@ -321,8 +339,7 @@ public class PlayerSelectScreen {
 		
 	}
 	
-	private void acceptGameInvite(String username) {
-		// Also need to find a way to start game for invite reciever, I mean we can just bring both users in?
+	private void acceptGameInvite(String username) { // Allows user to accept game invite
 		try {
 			Connection con = JDBConnector.getCon();
 			Statement myStat = con.createStatement();
@@ -339,7 +356,7 @@ public class PlayerSelectScreen {
 	}
 	
 	
-	void acceptedSecondGameInvite(String username, String Player1Username) {
+	void acceptedSecondGameInvite(String username, String Player1Username) { // Allows user to accept second game invite - after sender accepts.
 		try {
 			Connection con = JDBConnector.getCon();
 			Statement myStat = con.createStatement();

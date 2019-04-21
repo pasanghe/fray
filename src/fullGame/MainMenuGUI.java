@@ -19,7 +19,13 @@ import javax.swing.border.EmptyBorder;
 
 import fullGame.PlayerSelectScreen;
 import jdbc.JDBConnector;
-
+/**
+ * @author Gagandeep Ghotra, Sang Heon Park, Zain Razvi, Lee Fyye
+ * This class displays out a JFrame after a successful login.
+ * Here the user can click play to go to the player selection screen
+ * or exit.
+ *
+ */
 @SuppressWarnings("serial")
 public class MainMenuGUI extends JFrame {
 
@@ -89,7 +95,7 @@ public class MainMenuGUI extends JFrame {
 		
 		JLabel lblxp = new JLabel(getUserXP() + "XP");
 		lblxp.setFont(new Font("Tahoma", Font.PLAIN, 20));
-		lblxp.setBounds(570, 7, 46, 39);
+		lblxp.setBounds(570, 7, 145, 39);
 		panel.add(lblxp);
 		
 		JButton btnPlay = new JButton("Play");
@@ -103,10 +109,6 @@ public class MainMenuGUI extends JFrame {
 		});
 		btnPlay.setBounds(322, 102, 210, 92);
 		contentPane.add(btnPlay);
-		
-		JButton btnCredits = new JButton("Credits");
-		btnCredits.setBounds(322, 205, 210, 92);
-		contentPane.add(btnCredits);
 		
 		JButton btnExit = new JButton("Exit"); // Logout Code goes here
 		btnExit.addActionListener(new ActionListener() {
@@ -127,7 +129,7 @@ public class MainMenuGUI extends JFrame {
 				}
 			}
 		});
-		btnExit.setBounds(322, 308, 210, 92);
+		btnExit.setBounds(322, 205, 210, 92);
 		contentPane.add(btnExit);
 		
 		JLabel backgroundLabel = new JLabel("");

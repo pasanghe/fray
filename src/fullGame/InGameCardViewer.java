@@ -13,7 +13,13 @@ import java.awt.Font;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-
+/**
+ * @author Gagandeep Ghotra, Sang Heon Park, Zain Razvi, Lee Fyye
+ * This class is called specifically from FrayCardGame. 
+ * FrayCardGame when running will pass a card that is clicked into this
+ * class and this class will display out that specific card's information 
+ * to a separate JFrame.
+ */
 @SuppressWarnings("serial")
 public class InGameCardViewer extends JFrame {
 
@@ -21,6 +27,7 @@ public class InGameCardViewer extends JFrame {
 	private JLabel lblcn = new JLabel("*CN*"), lblap = new JLabel("*CN*"), lblhp = new JLabel("*CN*"), lblct = new JLabel("*CN*"),
 			lblec = new JLabel("*CN*"), lblhb = new JLabel("*CN*"), lblapb = new JLabel("*CN*"), lblerb = new JLabel("*CN*"),
 					lblarb = new JLabel("*CN*");
+	// Above labels; Card Name, Attack Points, Health Points, CardType, EnergyCost, Health Buff, Attack Points Buff, Energy Cost Reduce Buff, Armor Buff
 
 	private String username;
 	/**
@@ -120,9 +127,17 @@ public class InGameCardViewer extends JFrame {
 		JButton btnAttack = new JButton("Attack");
 		btnAttack.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String enemyCard = JOptionPane.showInputDialog(null, "Please enter the card name your wish to attack");
-				CardAffects attack = new CardAffects();
-				attack.attack1(getLblcn(), enemyCard, getUsername());
+				String enemyCard = JOptionPane.showInputDialog(null, "Please enter the card name your wish to attack"); // User types in what card they want to attack
+				CardAffects attack = new CardAffects(); // Creates a new cards affect class object
+				attack.attack1(getLblcn(), enemyCard, getUsername()); 
+				/* Using the cards affect class object, a card name is passed and the card
+				 * you want to attack is the second argument and the last one is your username and than
+				 * in the CardAffects class, a calculation is done to see which cards lives and dies.
+				 * Keep in mind, even though the method call below has the same syntax,
+				 * both methods are meant for connecting to the same database table and doing the calculation
+				 * using different 'perspectives'. attack1 is you vs enemy. attack2 is enemy vs you.
+				 * Attack2 method lets the player 2 connect. 
+				*/
 				attack.attack2(getLblcn(), enemyCard, getUsername());
 			}
 		});

@@ -6,24 +6,25 @@ import java.sql.SQLException;
 import javax.swing.JOptionPane;
 
 public class JDBConnector implements Runnable {
-	
-	private static String databaseSite = "sql3.freesqldatabase.com";
-	private static String databaseName = "sql3282320";
-	private static String databaseUsername = "sql3282320";
-	private static String databasePassword = "vAuzhDvkue";
+	/**
+	 * @author Gagandeep Ghotra, Sang Heon Park, Zain Razvi, Lee Fyyfe
+	 * This static class is made static for easy of access through project,
+	 * but in future revisions, it will be made into a non static object class.
+	 * This class connects to the Fray Card Game Database using the setCon() method.
+	 * When the method is connected successfully, than any classes could easily 
+	 * just do JDBConnector.getCon().
+	 */
+	private static String databaseSite = "sql3.freesqldatabase.com"; // Database site
+	private static String databaseName = "sql3282320"; // Database name
+	private static String databaseUsername = "sql3282320"; // Database username
+	private static String databasePassword = "vAuzhDvkue"; // Database password
 	private static Connection con;
-	
-	//private static String databaseSite = "ghotraga.dev.fast.sheridanc.on.ca";
-	//private static String databaseName = "AccountInformation";
-	//private static String databaseUsername = "ghotraga_ghotrag";
-	//private static String databasePassword = "?yNV#6?bfXE";
-	//private static Connection con;
 
 	public static Connection getCon() {
 		return con;
 	}
 
-	public static void setCon() {
+	public static void setCon() {// Connects to database and sets a connection variable to the connection and any class could do getCon and use the connection for sql statements.
 		try {
 			JDBConnector.con = DriverManager.getConnection("jdbc:mysql://" + databaseSite + "/" + databaseName, databaseUsername, databasePassword);
 		} catch (SQLException e) {
@@ -54,7 +55,8 @@ public class JDBConnector implements Runnable {
 		}
 	}
 	
-	public static void testMethod() {
+	public static void testMethod() { // A test mehtod that is used only when this class is run, all other classes accessing
+		// JBConnector will use JBConnector.getCon().
 		try {
 			setCon();
 			if(con.isValid(0)) {

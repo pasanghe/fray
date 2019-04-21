@@ -26,14 +26,19 @@ import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.border.EmptyBorder;
 
 import jdbc.JDBConnector;
-
+/**
+ * @author Gagandeep Ghotra, Sang Heon Park, Zain Razvi, Lee Fyye
+ * This class displays out a JFrame allowing the user to sign in
+ * using an existing account, if not they can click sign up button
+ * to create a new account using the signupgui class.
+ */
 @SuppressWarnings("serial")
 public class LoginGUI extends JFrame {
 
 	private JPanel contentPane;
-	JTextField uTF;
-	private JPasswordField pTF;
-	private Thread ConnectionCheckThread;
+	JTextField uTF; // Username text field
+	private JPasswordField pTF; // password textfield
+	private Thread ConnectionCheckThread; // Will be used later on in the class to connect to the database.
 	
 	public String getUsername() {
 		return Username;

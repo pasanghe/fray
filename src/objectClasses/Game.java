@@ -17,7 +17,8 @@ public abstract class Game
     private final String gameName;//the title of the game
     private ArrayList <Player> players;// the players of the game
     
-    public Game(String givenName)
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	public Game(String givenName)
     {
         gameName = givenName;
         players = new ArrayList();

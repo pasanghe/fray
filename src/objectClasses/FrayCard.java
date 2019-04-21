@@ -2,21 +2,29 @@ package objectClasses;
 
 import javax.swing.ImageIcon;
 
-public class FrayCard{
+/**
+ * @author Gagandeep Ghotra, Sang Heon Park, Zain Razvi, Lee fyyfe
+ * This is an object class that will be used as a template for cards
+ * that will be brought into the game from the database.
+ * Fray's cards are a bit different that regular cards games.
+ * Fray's cards have a name, attack points, health points, class,
+ * type, energy cost, state, health, attack, cost, and armor buffs.
+ */
+public class FrayCard {
 	
-	private ImageIcon image;
-	private String cardName;
-	private int cardAttackPoints;
-	private int cardHealthPoints;
-	private int cardArmorPoints;
-	private String cardClass;
-	private String cardType;
-	private int energyCost;
-	private String cardState;
-	private int spellValueHealth;
-	private int spellValueAttack;
-	private int spellValueCost;
-	private int spellValueArmor;
+	private ImageIcon image; // Image of the card (Will be added into a later version)
+	private String cardName; // Card Name
+	private int cardAttackPoints; // Card Attack Points
+	private int cardHealthPoints; // Card Health Points
+	private int cardArmorPoints; // Card Armor Points
+	private String cardClass; // Card Class
+	private String cardType; // Card Type (Minions, Spell, Legendary) - Will be used to differentiate what type of card it is in game.
+	private int energyCost; // Energy Cost of the card when placed
+	private String cardState; // State of the card when placed onto the field
+	private int spellValueHealth; // Health buffs given by spell cards
+	private int spellValueAttack; // Attack buffs given by spell cards
+	private int spellValueCost; // Cost buffs given by spell cards
+	private int spellValueArmor; // Armor buffs given by spell cards
 	
 	public FrayCard(ImageIcon image, String cardName, int cardAttackPoints, int cardArmorPoints, int cardHealthPoints, String cardClass, String cardType, int energyCost, String cardState, int spellValueHealth, int spellValueAttack, int spellValueCost, int spellValueArmor) {
 		this.image = image;
